@@ -1,7 +1,7 @@
 # IdeaVault — Estado del proyecto
 
 > Documento vivo. Actualizar al final de cada sesión de trabajo significativa.
-> Último update: 2026-04-19 (post-commit `e86567c`).
+> Último update: 2026-04-20 (post-commit feat(db): initial schema).
 
 ## Contexto rápido
 
@@ -48,16 +48,19 @@ App web + mobile para capturar y desarrollar ideas con IA. MVP en camino a produ
 - [x] `.env.example` commiteado, `.env.local` con credenciales reales (ignorado)
 - [x] Smoke test: `supabase.auth.getSession()` responde OK en browser
 
-### Fase 1 — Auth + persistencia cloud: 🟡 EN PROGRESO (~10%)
+### Fase 1 — Auth + persistencia cloud: 🟡 EN PROGRESO (~35%)
 
 Objetivo: usuarios se registran y sus ideas viven en Postgres. Proxy de Anthropic funcionando.
 
+Completado:
+
+- [x] `supabase link` al proyecto remoto (`buxpbftbncgvicayvhrl`)
+- [x] Primera migración SQL: `profiles`, `ideas`, `api_usage` + triggers `updated_at` + trigger crear profile al signup
+- [x] RLS policies para las 3 tablas (en la misma migración)
+- [x] `database.types.ts` regenerado con tipos reales de `profiles`, `ideas`, `api_usage`
+
 Pendiente:
 
-- [ ] `supabase link` al proyecto remoto
-- [ ] Primera migración SQL: `profiles`, `ideas`, `api_usage` + triggers `updated_at` + trigger crear profile al signup
-- [ ] RLS policies para esas tablas
-- [ ] Regenerar `database.types.ts` con `pnpm supabase gen types typescript --linked`
 - [ ] Schemas zod de dominio en `packages/core/src/schemas/`
 - [ ] React Query provider en `apps/web`
 - [ ] Hooks: `useIdeas`, `useCreateIdea`, `useUpdateIdea`, `useDeleteIdea`
@@ -77,6 +80,18 @@ Pendiente:
 - Fase 5: Export PDF + Notion
 - Fase 6: Polish, dominio, landing, analytics, deploy final
 
+## Schema actual
+
+Tres tablas en `public`, todas con RLS habilitado:
+
+| Tabla       | Descripción                                                                                                                                          |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `profiles`  | Perfil de usuario, 1:1 con `auth.users`. Se crea automáticamente al signup vía trigger.                                                              |
+| `ideas`     | Ideas del usuario. Soft delete (`deleted_at`). Stage: `seed / growing / ready`. Campo `development` jsonb libre.                                     |
+| `api_usage` | Log de llamadas a Anthropic. Modelo (`haiku` / `sonnet`), tokens in/out. Solo lectura vía RLS; escritura solo desde Edge Functions con service role. |
+
+Migración: `supabase/migrations/20260420124310_initial_schema.sql`
+
 ## Estructura actual del repo
 
 ```
@@ -92,7 +107,10 @@ ideavault/
 ├── docs/
 │   └── STATUS.md             # este archivo
 ├── supabase/
-│   └── config.toml           # inicializado, sin link todavía
+│   ├── config.toml
+│   ├── .temp/project-ref     # linkeado a buxpbftbncgvicayvhrl
+│   └── migrations/
+│       └── 20260420124310_initial_schema.sql
 ├── packages/
 │   └── core/
 │       ├── package.json      # @ideavault/core, workspace
@@ -102,7 +120,7 @@ ideavault/
 │           ├── env.ts        # parseClientEnv + zod schema
 │           └── supabase/
 │               ├── client.ts          # createIdeaVaultClient factory
-│               ├── database.types.ts  # placeholder, regenerar
+│               ├── database.types.ts  # tipos reales generados
 │               └── index.ts
 └── apps/
     └── web/
@@ -114,7 +132,7 @@ ideavault/
         ├── .env.local        # IGNORADO, con credenciales reales
         └── src/
             ├── main.tsx
-            ├── App.tsx       # smoke test de conexión Supabase
+            ├── App.tsx
             ├── index.css
             ├── vite-env.d.ts
             └── lib/
@@ -125,6 +143,7 @@ ideavault/
 
 - `d2a19a3` — chore: setup monorepo con apps/web scaffolded
 - `e86567c` — feat(core): supabase client tipado + smoke test en web
+- `(próximo)` — feat(db): initial schema con profiles, ideas, api_usage + RLS
 
 ## Decisiones técnicas clave tomadas (para no revisitar)
 
@@ -154,15 +173,9 @@ ideavault/
 
 ## Próximo paso inmediato
 
-**`supabase link` + primera migración (profiles + ideas + RLS).**
+**React Query provider + hooks de ideas + refactor de `ideas-app.jsx` a TS.**
 
-Comando probable para arrancar:
-
-```bash
-pnpm supabase link --project-ref <ref>
-```
-
-Donde `<ref>` es el identificador del proyecto Supabase (aparece en la URL del dashboard).
+Instalar `@tanstack/react-query`, configurar `QueryClientProvider` en `apps/web/src/main.tsx`, crear hooks tipados en `packages/core/src/hooks/` o `apps/web/src/features/ideas/`.
 
 ## Cómo retomar con un Claude nuevo
 
