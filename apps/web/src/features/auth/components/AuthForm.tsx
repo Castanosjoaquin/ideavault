@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { MagicLinkRequestSchema } from "@ideavault/core";
 import { supabase } from "../../../lib/supabase";
+import { GoogleButton } from "./GoogleButton";
 import styles from "./AuthForm.module.css";
 
 export function AuthForm() {
@@ -65,7 +66,12 @@ export function AuthForm() {
             <button className={styles.button} type="submit" disabled={loading}>
               {loading ? "Enviando..." : "Enviar magic link"}
             </button>
-            {/* TODO: OAuth Google en prompt B */}
+            <div className={styles.divider}>
+              <span className={styles.dividerLine} />
+              <span className={styles.dividerText}>o</span>
+              <span className={styles.dividerLine} />
+            </div>
+            <GoogleButton />
           </form>
         )}
       </div>

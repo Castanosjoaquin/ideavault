@@ -1,7 +1,7 @@
 # IdeaVault — Estado del proyecto
 
 > Documento vivo. Actualizar al final de cada sesión de trabajo significativa.
-> Último update: 2026-04-20 (post-commit refactor(web): ideas features con react query).
+> Último update: 2026-04-20 (post-commit feat(auth): oauth con google).
 
 ## Contexto rápido
 
@@ -74,9 +74,10 @@ Completado:
 - [x] CSS Modules — dark theme `#0f0e0c`, fuentes Lora + JetBrains Mono
 - [x] `pnpm --filter @ideavault/web build` ✅ sin errores TS
 
+- [x] **OAuth Google** — `useSignInWithGoogle`, `GoogleButton` (SVG inline), separador en `AuthForm`
+
 Pendiente:
 
-- [ ] **OAuth Google** — requiere configuración manual en Google Cloud Console (Prompt B)
 - [ ] Edge Function `develop-idea` con rate limit contra `api_usage` (Prompt C)
 - [ ] Secret `ANTHROPIC_API_KEY` en Supabase (Prompt C)
 - [ ] Reemplazar stub `useDevelopIdea` por `supabase.functions.invoke` (Prompt C)
@@ -158,9 +159,10 @@ ideavault/
 - `d2a19a3` — chore: setup monorepo con apps/web scaffolded
 - `e86567c` — feat(core): supabase client tipado + smoke test en web
 - `00fb3c2` — feat(db): initial schema con profiles, ideas, api_usage + RLS
-- `(próximo)` — feat(core): schemas zod de idea y auth
-- `(próximo)` — feat(web): auth con magic link + protected routes
-- `(próximo)` — refactor(web): refactor de ideas a features/ con react query
+- `768142f` — feat(core): schemas zod de idea y auth
+- `5078287` — feat(web): auth con magic link + protected routes
+- `4ebec9c` — refactor(web): refactor de ideas a features/ con react query
+- `(próximo)` — feat(auth): oauth con google
 
 ## Decisiones técnicas clave tomadas (para no revisitar)
 
@@ -192,17 +194,15 @@ ideavault/
 
 ## Próximo paso inmediato
 
-**OAuth Google — requiere configuración manual en Google Cloud Console antes de continuar.**
+**Edge Function `develop-idea` con rate limit (Prompt C).**
 
-Pasos previos necesarios (hacerlos vos):
+Crear `supabase/functions/develop-idea/index.ts` con:
 
-1. Crear proyecto en Google Cloud Console
-2. Habilitar Google Identity API
-3. Crear OAuth 2.0 client ID (tipo Web Application)
-4. Agregar `https://buxpbftbncgvicayvhrl.supabase.co/auth/v1/callback` como redirect URI
-5. Copiar Client ID y Client Secret al dashboard de Supabase → Authentication → Providers → Google
-
-Después de eso, el Prompt B agrega el botón "Continuar con Google" en `AuthForm.tsx`.
+- Autenticación via JWT (`Authorization: Bearer <token>`)
+- Rate limit contra tabla `api_usage` (máx N requests/mes por usuario)
+- Llamada a Anthropic API (Claude Haiku) con el contexto de la idea
+- Retorna `IdeaDevelopment` como JSON
+- Luego reemplazar el stub `useDevelopIdea` para invocar esta función
 
 ## Cómo retomar con un Claude nuevo
 
