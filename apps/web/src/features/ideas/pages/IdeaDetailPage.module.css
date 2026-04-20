@@ -1,0 +1,249 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.header {
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-xl);
+  justify-content: space-between;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.backButton {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 0;
+  transition: color var(--transition);
+}
+
+.backButton:hover {
+  color: var(--text);
+}
+
+.headerActions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.editButton {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 6px var(--spacing-md);
+  transition: all var(--transition);
+}
+
+.editButton:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.deleteButton {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 6px var(--spacing-md);
+  transition: all var(--transition);
+}
+
+.deleteButton:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.content {
+  flex: 1;
+  max-width: 700px;
+  padding: var(--spacing-xl);
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.titleRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+}
+
+.meta {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: center;
+}
+
+.category {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.description {
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.aiSection {
+  border-top: 1px solid var(--border);
+  padding-top: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.aiTitle {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.developButton {
+  align-self: flex-start;
+  background: var(--accent-subtle);
+  border: 1px solid rgba(200, 168, 75, 0.3);
+  border-radius: var(--radius);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px var(--spacing-lg);
+  transition: all var(--transition);
+}
+
+.developButton:hover:not(:disabled) {
+  background: rgba(200, 168, 75, 0.2);
+}
+
+.developButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.aiError {
+  color: var(--danger);
+  font-size: 13px;
+}
+
+/* Edit mode */
+.editForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-xl);
+  max-width: 700px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.label {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.input,
+.textarea,
+.select {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  outline: none;
+  padding: 10px var(--spacing-md);
+  transition: border-color var(--transition);
+}
+
+.input:focus,
+.textarea:focus,
+.select:focus {
+  border-color: var(--border-focus);
+}
+
+.textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.editActions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: flex-end;
+}
+
+.cancelEditButton {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  padding: 9px var(--spacing-lg);
+  transition: all var(--transition);
+}
+
+.saveButton {
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius);
+  color: var(--bg);
+  font-weight: 600;
+  padding: 9px var(--spacing-lg);
+  transition: background var(--transition);
+}
+
+.saveButton:hover:not(:disabled) {
+  background: var(--accent-dim);
+}
+
+.saveButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.loadingState,
+.errorState {
+  padding: var(--spacing-xl);
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.errorState {
+  color: var(--danger);
+}

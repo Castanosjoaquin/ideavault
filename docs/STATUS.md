@@ -1,7 +1,7 @@
 # IdeaVault — Estado del proyecto
 
 > Documento vivo. Actualizar al final de cada sesión de trabajo significativa.
-> Último update: 2026-04-20 (post-commit feat(db): initial schema).
+> Último update: 2026-04-20 (post-commit refactor(web): ideas features con react query).
 
 ## Contexto rápido
 
@@ -14,8 +14,8 @@ App web + mobile para capturar y desarrollar ideas con IA. MVP en camino a produ
 - **Mobile** (futuro): Expo managed workflow + EAS.
 - **Backend**: Supabase (Postgres + Auth + Edge Functions + Storage). Sin backend propio.
 - **Shared**: `@ideavault/core` — tipos, Supabase client, schemas zod.
-- **Estado servidor**: TanStack Query.
-- **Routing web**: React Router.
+- **Estado servidor**: TanStack Query v5.
+- **Routing web**: React Router v6.
 - **Validación**: zod en cliente y Edge Functions.
 - **IA**: Anthropic API, Claude Haiku default, Sonnet para paid tier. SIEMPRE via Edge Function con rate limit en DB.
 - **Offline**: Dexie (web) / expo-sqlite (mobile), sync custom con `updated_at` + soft deletes. (No implementado aún.)
@@ -43,12 +43,12 @@ App web + mobile para capturar y desarrollar ideas con IA. MVP en camino a produ
 - [x] Supabase CLI instalada como dev dep raíz
 - [x] `packages/core/src/env.ts` con validación zod de env vars
 - [x] `packages/core/src/supabase/client.ts` — factory tipada
-- [x] `packages/core/src/supabase/database.types.ts` — placeholder (regenerar cuando haya schema)
+- [x] `packages/core/src/supabase/database.types.ts` — tipos reales generados
 - [x] `apps/web/src/lib/supabase.ts` — singleton del client
 - [x] `.env.example` commiteado, `.env.local` con credenciales reales (ignorado)
 - [x] Smoke test: `supabase.auth.getSession()` responde OK en browser
 
-### Fase 1 — Auth + persistencia cloud: 🟡 EN PROGRESO (~35%)
+### Fase 1 — Auth + persistencia cloud: 🟡 EN PROGRESO (~85%)
 
 Objetivo: usuarios se registran y sus ideas viven en Postgres. Proxy de Anthropic funcionando.
 
@@ -58,19 +58,28 @@ Completado:
 - [x] Primera migración SQL: `profiles`, `ideas`, `api_usage` + triggers `updated_at` + trigger crear profile al signup
 - [x] RLS policies para las 3 tablas (en la misma migración)
 - [x] `database.types.ts` regenerado con tipos reales de `profiles`, `ideas`, `api_usage`
+- [x] Schemas zod de dominio en `packages/core/src/schemas/` (idea, auth)
+- [x] React Query provider en `apps/web` (`app/providers.tsx`, `staleTime: 30_000`)
+- [x] Hooks: `useIdeas`, `useIdea`, `useCreateIdea`, `useUpdateIdea`, `useDeleteIdea` (soft delete)
+- [x] `useDevelopIdea` — stub (lanza error hasta Prompt C)
+- [x] Auth con magic link: `LoginPage`, `AuthCallbackPage`, `AuthForm`
+- [x] `useAuth` hook con `AuthProvider` (Context, `onAuthStateChange`, expone `{ user, session, loading }`)
+- [x] `useSignOut` hook
+- [x] `ProtectedRoute` con spinner + redirect a `/login`
+- [x] Rutas: `/login`, `/signup`, `/auth/callback`, `/`, `/ideas/new`, `/ideas/:id`
+- [x] `IdeasListPage` con Sidebar (stage filter + search) + lista de IdeaCards
+- [x] `NewIdeaPage` con formulario validado con zod
+- [x] `IdeaDetailPage` con edición inline, eliminación (soft delete), botón IA (stub)
+- [x] Componentes: `IdeaCard`, `StagePill`, `Sidebar`, `DevBlock`
+- [x] CSS Modules — dark theme `#0f0e0c`, fuentes Lora + JetBrains Mono
+- [x] `pnpm --filter @ideavault/web build` ✅ sin errores TS
 
 Pendiente:
 
-- [ ] Schemas zod de dominio en `packages/core/src/schemas/`
-- [ ] React Query provider en `apps/web`
-- [ ] Hooks: `useIdeas`, `useCreateIdea`, `useUpdateIdea`, `useDeleteIdea`
-- [ ] Páginas `/login`, `/signup`, `/reset-password` (Supabase Auth UI o custom)
-- [ ] Refactor del componente `ideas-app.jsx` → TS troceado en features
-- [ ] OAuth Google (opcional, al final de la fase)
-- [ ] Edge Function `develop-idea` con rate limit contra `api_usage`
-- [ ] Secret `ANTHROPIC_API_KEY` en Supabase
-- [ ] Reemplazar `fetch` directo a Anthropic por `supabase.functions.invoke`
-- [ ] Opcional: script de migración de data de localStorage a Supabase al primer login
+- [ ] **OAuth Google** — requiere configuración manual en Google Cloud Console (Prompt B)
+- [ ] Edge Function `develop-idea` con rate limit contra `api_usage` (Prompt C)
+- [ ] Secret `ANTHROPIC_API_KEY` en Supabase (Prompt C)
+- [ ] Reemplazar stub `useDevelopIdea` por `supabase.functions.invoke` (Prompt C)
 
 ### Fases 2-6 — PENDIENTES
 
@@ -96,54 +105,62 @@ Migración: `supabase/migrations/20260420124310_initial_schema.sql`
 
 ```
 ideavault/
-├── package.json              # raíz, pnpm workspaces
+├── package.json
 ├── pnpm-workspace.yaml
 ├── tsconfig.base.json
-├── eslint.config.mjs         # flat config, con globals
-├── .prettierrc, .editorconfig, .nvmrc, .gitignore
-├── .vscode/settings.json
-├── .husky/pre-commit         # corre lint-staged
-├── CLAUDE.md                 # convenciones para Claude Code
+├── eslint.config.mjs
 ├── docs/
-│   └── STATUS.md             # este archivo
+│   └── STATUS.md
 ├── supabase/
 │   ├── config.toml
-│   ├── .temp/project-ref     # linkeado a buxpbftbncgvicayvhrl
 │   └── migrations/
 │       └── 20260420124310_initial_schema.sql
 ├── packages/
 │   └── core/
-│       ├── package.json      # @ideavault/core, workspace
-│       ├── tsconfig.json
 │       └── src/
-│           ├── index.ts      # re-exports
-│           ├── env.ts        # parseClientEnv + zod schema
+│           ├── index.ts
+│           ├── env.ts
+│           ├── schemas/
+│           │   ├── idea.ts        # IdeaStage, IdeaDevelopment, Idea, NewIdeaInput, UpdateIdeaInput
+│           │   ├── auth.ts        # Email, MagicLinkRequest
+│           │   └── index.ts
 │           └── supabase/
-│               ├── client.ts          # createIdeaVaultClient factory
-│               ├── database.types.ts  # tipos reales generados
+│               ├── client.ts
+│               ├── database.types.ts
 │               └── index.ts
 └── apps/
     └── web/
-        ├── package.json      # @ideavault/web
-        ├── tsconfig.json (+ app.json, node.json)
-        ├── vite.config.ts
-        ├── index.html
-        ├── .env.example      # commiteado
-        ├── .env.local        # IGNORADO, con credenciales reales
+        ├── index.html             # Google Fonts (Lora + JetBrains Mono)
         └── src/
-            ├── main.tsx
-            ├── App.tsx
-            ├── index.css
-            ├── vite-env.d.ts
-            └── lib/
-                └── supabase.ts
+            ├── main.tsx           # BrowserRouter + Providers
+            ├── App.tsx            # AppRouter
+            ├── styles/
+            │   └── globals.css    # vars CSS, dark theme, reset
+            ├── lib/
+            │   └── supabase.ts
+            ├── app/
+            │   ├── providers.tsx  # QueryClientProvider + AuthProvider
+            │   ├── router.tsx     # Routes
+            │   └── ProtectedRoute.tsx
+            └── features/
+                ├── auth/
+                │   ├── hooks/     useAuth, useSignOut
+                │   ├── pages/     LoginPage, AuthCallbackPage
+                │   └── components/ AuthForm
+                └── ideas/
+                    ├── hooks/     useIdeas, useIdea, useCreateIdea, useUpdateIdea, useDeleteIdea, useDevelopIdea
+                    ├── pages/     IdeasListPage, NewIdeaPage, IdeaDetailPage
+                    └── components/ IdeaCard, StagePill, Sidebar, DevBlock
 ```
 
 ## Commits hechos
 
 - `d2a19a3` — chore: setup monorepo con apps/web scaffolded
 - `e86567c` — feat(core): supabase client tipado + smoke test en web
-- `(próximo)` — feat(db): initial schema con profiles, ideas, api_usage + RLS
+- `00fb3c2` — feat(db): initial schema con profiles, ideas, api_usage + RLS
+- `(próximo)` — feat(core): schemas zod de idea y auth
+- `(próximo)` — feat(web): auth con magic link + protected routes
+- `(próximo)` — refactor(web): refactor de ideas a features/ con react query
 
 ## Decisiones técnicas clave tomadas (para no revisitar)
 
@@ -155,7 +172,9 @@ ideavault/
 - **Node ≥ 20.12** en engines (Vite 8 pide ≥ 20.19).
 - **Un solo proyecto Supabase** (`ideavault`), región São Paulo, plan Free. Branches cuando escale.
 - **Sin Turbo/Nx** todavía. pnpm -r alcanza.
-- **Sin Tailwind** todavía. Estilos inline del MVP → CSS modules cuando toque ese componente.
+- **CSS Modules** para estilos de features. `styles/globals.css` para variables y reset.
+- **`AuthProvider` con Context**: evita duplicar la suscripción `onAuthStateChange`, compartido vía `useAuth()`.
+- **React Router v6** (v6.26 instalado, no v7). BrowserRouter + Routes + Route + Outlet.
 - **`@ideavault/core` consumido vía source (`.ts`)**, no vía dist. Ahorra build intermedio.
 
 ## Riesgos activos
@@ -173,9 +192,17 @@ ideavault/
 
 ## Próximo paso inmediato
 
-**React Query provider + hooks de ideas + refactor de `ideas-app.jsx` a TS.**
+**OAuth Google — requiere configuración manual en Google Cloud Console antes de continuar.**
 
-Instalar `@tanstack/react-query`, configurar `QueryClientProvider` en `apps/web/src/main.tsx`, crear hooks tipados en `packages/core/src/hooks/` o `apps/web/src/features/ideas/`.
+Pasos previos necesarios (hacerlos vos):
+
+1. Crear proyecto en Google Cloud Console
+2. Habilitar Google Identity API
+3. Crear OAuth 2.0 client ID (tipo Web Application)
+4. Agregar `https://buxpbftbncgvicayvhrl.supabase.co/auth/v1/callback` como redirect URI
+5. Copiar Client ID y Client Secret al dashboard de Supabase → Authentication → Providers → Google
+
+Después de eso, el Prompt B agrega el botón "Continuar con Google" en `AuthForm.tsx`.
 
 ## Cómo retomar con un Claude nuevo
 

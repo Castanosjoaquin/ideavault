@@ -1,0 +1,29 @@
+.pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 20px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: 2px 10px;
+  text-transform: uppercase;
+}
+
+.seed {
+  background: rgba(138, 128, 112, 0.15);
+  color: var(--text-muted);
+  border: 1px solid rgba(138, 128, 112, 0.25);
+}
+
+.growing {
+  background: rgba(75, 200, 122, 0.1);
+  color: #4bc87a;
+  border: 1px solid rgba(75, 200, 122, 0.25);
+}
+
+.ready {
+  background: var(--accent-subtle);
+  color: var(--accent);
+  border: 1px solid rgba(200, 168, 75, 0.3);
+}

@@ -1,0 +1,137 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.header {
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-xl);
+}
+
+.backButton {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 0;
+  transition: color var(--transition);
+}
+
+.backButton:hover {
+  color: var(--text);
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  color: var(--text);
+}
+
+.content {
+  flex: 1;
+  max-width: 600px;
+  padding: var(--spacing-xl);
+  width: 100%;
+  margin: 0 auto;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.label {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.input,
+.textarea,
+.select {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  outline: none;
+  padding: 10px var(--spacing-md);
+  transition: border-color var(--transition);
+}
+
+.input:focus,
+.textarea:focus,
+.select:focus {
+  border-color: var(--border-focus);
+}
+
+.textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.select option {
+  background: var(--bg-elevated);
+}
+
+.actions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: flex-end;
+  padding-top: var(--spacing-sm);
+}
+
+.cancelButton {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  padding: 9px var(--spacing-lg);
+  transition: all var(--transition);
+}
+
+.cancelButton:hover {
+  border-color: var(--text-muted);
+  color: var(--text);
+}
+
+.submitButton {
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius);
+  color: var(--bg);
+  font-weight: 600;
+  padding: 9px var(--spacing-lg);
+  transition: background var(--transition);
+}
+
+.submitButton:hover:not(:disabled) {
+  background: var(--accent-dim);
+}
+
+.submitButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.error {
+  background: rgba(200, 75, 75, 0.12);
+  border: 1px solid rgba(200, 75, 75, 0.3);
+  border-radius: var(--radius);
+  color: var(--danger);
+  font-size: 13px;
+  padding: var(--spacing-sm) var(--spacing-md);
+}
