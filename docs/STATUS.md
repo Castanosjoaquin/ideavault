@@ -1,7 +1,7 @@
 # IdeaVault — Estado del proyecto
 
 > Documento vivo. Actualizar al final de cada sesión de trabajo significativa.
-> Último update: 2026-04-20 (post-commit feat(auth): oauth con google).
+> Último update: 2026-04-20 (post-commit feat(ai): edge function develop-idea).
 
 ## Contexto rápido
 
@@ -48,7 +48,7 @@ App web + mobile para capturar y desarrollar ideas con IA. MVP en camino a produ
 - [x] `.env.example` commiteado, `.env.local` con credenciales reales (ignorado)
 - [x] Smoke test: `supabase.auth.getSession()` responde OK en browser
 
-### Fase 1 — Auth + persistencia cloud: 🟡 EN PROGRESO (~85%)
+### Fase 1 — Auth + persistencia cloud: ✅ COMPLETADA
 
 Objetivo: usuarios se registran y sus ideas viven en Postgres. Proxy de Anthropic funcionando.
 
@@ -76,11 +76,17 @@ Completado:
 
 - [x] **OAuth Google** — `useSignInWithGoogle`, `GoogleButton` (SVG inline), separador en `AuthForm`
 
-Pendiente:
+- [x] Edge Function `develop-idea` con rate limit contra `api_usage`
+- [x] Secret `ANTHROPIC_API_KEY` en Supabase
+- [x] Reemplazar stub `useDevelopIdea` por `supabase.functions.invoke`
 
-- [ ] Edge Function `develop-idea` con rate limit contra `api_usage` (Prompt C)
-- [ ] Secret `ANTHROPIC_API_KEY` en Supabase (Prompt C)
-- [ ] Reemplazar stub `useDevelopIdea` por `supabase.functions.invoke` (Prompt C)
+### Fase 1.5 — Multi-provider + BYOK: PENDIENTE
+
+- Nuevos providers: OpenAIProvider, GeminiProvider (DeepSeek on-demand).
+- Tabla `user_api_keys` encriptada (usar pgcrypto + supabase vault).
+- Settings page: user pega su key, test de validez.
+- Router: si tier=byok usa key del user, si no usa la del sistema.
+- Selector de provider/modelo en la UI del botón "Desarrollar".
 
 ### Fases 2-6 — PENDIENTES
 
@@ -96,7 +102,7 @@ Tres tablas en `public`, todas con RLS habilitado:
 
 | Tabla       | Descripción                                                                                                                                          |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `profiles`  | Perfil de usuario, 1:1 con `auth.users`. Se crea automáticamente al signup vía trigger.                                                              |
+| `profiles`  | Perfil de usuario, 1:1 con `auth.users`. Se crea automáticamente al signup vía trigger. Campo `tier` (free_trial/byok/paid, default free_trial).     |
 | `ideas`     | Ideas del usuario. Soft delete (`deleted_at`). Stage: `seed / growing / ready`. Campo `development` jsonb libre.                                     |
 | `api_usage` | Log de llamadas a Anthropic. Modelo (`haiku` / `sonnet`), tokens in/out. Solo lectura vía RLS; escritura solo desde Edge Functions con service role. |
 
@@ -178,6 +184,8 @@ ideavault/
 - **`AuthProvider` con Context**: evita duplicar la suscripción `onAuthStateChange`, compartido vía `useAuth()`.
 - **React Router v6** (v6.26 instalado, no v7). BrowserRouter + Routes + Route + Outlet.
 - **`@ideavault/core` consumido vía source (`.ts`)**, no vía dist. Ahorra build intermedio.
+- **Rate limit LIFETIME (20 para free_trial)** en vez de mensual, dado que la estrategia es free trial → BYOK / paid (Fase 1.5). Se cuenta con `count(*) from api_usage where user_id = X` sin filtro temporal.
+- **Provider abstraction en `develop-idea`**: interfaz `AIProvider` con `AnthropicProvider` como única implementación. Agregar providers = nueva clase + `case` en `getProvider` switch.
 
 ## Riesgos activos
 
@@ -194,15 +202,7 @@ ideavault/
 
 ## Próximo paso inmediato
 
-**Edge Function `develop-idea` con rate limit (Prompt C).**
-
-Crear `supabase/functions/develop-idea/index.ts` con:
-
-- Autenticación via JWT (`Authorization: Bearer <token>`)
-- Rate limit contra tabla `api_usage` (máx N requests/mes por usuario)
-- Llamada a Anthropic API (Claude Haiku) con el contexto de la idea
-- Retorna `IdeaDevelopment` como JSON
-- Luego reemplazar el stub `useDevelopIdea` para invocar esta función
+**Fase 2 — Tags custom + compartir ideas.**
 
 ## Cómo retomar con un Claude nuevo
 

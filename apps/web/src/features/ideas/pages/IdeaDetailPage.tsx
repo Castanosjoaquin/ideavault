@@ -21,6 +21,9 @@ export function IdeaDetailPage() {
   const deleteIdea = useDeleteIdea(user!.id);
   const developIdea = useDevelopIdea();
 
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [usageInfo, setUsageInfo] = useState<{ used: number; limit: number | null } | null>(null);
+
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
@@ -215,9 +218,32 @@ export function IdeaDetailPage() {
             className={styles.developButton}
             disabled={developIdea.isPending}
             onClick={() => {
+              setAiError(null);
               developIdea.mutate(idea.id, {
+                onSuccess: (data) => {
+                  if (data.usage.limit !== null) {
+                    setUsageInfo({ used: data.usage.used, limit: data.usage.limit });
+                  }
+                },
                 onError: (err) => {
-                  alert(err.message);
+                  const msg = (err as { message?: string }).message ?? "";
+                  if (msg.includes("rate_limit") || msg.includes("429")) {
+                    setAiError(
+                      "Usaste tu trial de 20 ideas desarrolladas. Próximamente vas a poder traer tu propia API key o subscribirte para seguir usando.",
+                    );
+                  } else if (msg.includes("idea_not_found") || msg.includes("404")) {
+                    setAiError("No se encontró la idea.");
+                  } else if (
+                    msg.includes("anthropic_") ||
+                    msg.includes("invalid_model_output") ||
+                    msg.includes("502")
+                  ) {
+                    setAiError(
+                      "Algo salió mal al desarrollar la idea. Intentá de nuevo en un momento.",
+                    );
+                  } else {
+                    setAiError("Error inesperado. Intentá de nuevo.");
+                  }
                 },
               });
             }}
@@ -225,7 +251,12 @@ export function IdeaDetailPage() {
             {developIdea.isPending ? "Procesando..." : "✦ Desarrollar con IA"}
           </button>
 
-          {developIdea.isError && <p className={styles.aiError}>{developIdea.error.message}</p>}
+          {aiError && <p className={styles.aiError}>{aiError}</p>}
+          {usageInfo && usageInfo.limit !== null && (
+            <p className={styles.usageInfo}>
+              {usageInfo.used} de {usageInfo.limit} usos
+            </p>
+          )}
         </div>
       </div>
     </div>

@@ -44,7 +44,7 @@ export default [
     },
   },
   {
-    ignores: ["**/dist/**", "**/build/**", "**/.expo/**", "**/node_modules/**"],
+    ignores: ["**/dist/**", "**/build/**", "**/.expo/**", "**/node_modules/**", "supabase/functions/**"],
   },
   prettier,
 ];
