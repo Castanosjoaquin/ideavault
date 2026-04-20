@@ -1,0 +1,89 @@
+:root {
+  --bg: #0f0e0c;
+  --bg-elevated: #161410;
+  --bg-card: #1c1a16;
+  --accent: #c8a84b;
+  --accent-dim: #9a7e3a;
+  --accent-subtle: rgba(200, 168, 75, 0.12);
+  --text: #e8e4d9;
+  --text-muted: #8a8070;
+  --border: #2a2620;
+  --border-focus: #c8a84b;
+  --danger: #c84b4b;
+  --success: #4bc87a;
+
+  --font-serif: "Lora", Georgia, serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+  --font-body: system-ui, -apple-system, sans-serif;
+
+  --radius-sm: 4px;
+  --radius: 8px;
+  --radius-lg: 12px;
+
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+
+  --sidebar-width: 220px;
+  --transition: 150ms ease;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  line-height: 1.3;
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+input,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
