@@ -147,15 +147,24 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) return json({ error: "unauthorized" }, 401);
 
+    const token = authHeader.replace(/^Bearer\s+/i, "");
+
+    const admin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+
+    const { data: userData, error: userErr } = await admin.auth.getUser(token);
+    if (userErr || !userData.user) {
+      return json({ error: "unauthorized", detail: userErr?.message }, 401);
+    }
+    const userId = userData.user.id;
+
     const userClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: authHeader } } },
     );
-
-    const { data: userData, error: userErr } = await userClient.auth.getUser();
-    if (userErr || !userData.user) return json({ error: "unauthorized" }, 401);
-    const userId = userData.user.id;
 
     // 2. Validación body
     const body = await req.json().catch(() => null);
@@ -164,12 +173,6 @@ Deno.serve(async (req) => {
       return json({ error: "invalid_request", details: parsed.error.flatten() }, 400);
     }
     const { ideaId } = parsed.data;
-
-    // 3. Admin client para queries privilegiadas
-    const admin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
 
     // 4. Fetch tier + current usage + idea — en paralelo
     const [profileRes, usageRes, ideaRes] = await Promise.all([
