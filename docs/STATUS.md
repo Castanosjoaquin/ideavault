@@ -1,7 +1,7 @@
 # IdeaVault — Estado del proyecto
 
 > Documento vivo. Actualizar al final de cada sesión de trabajo significativa.
-> Último update: 2026-04-20 (post-commit feat(ai): edge function develop-idea).
+> Último update: 2026-04-21 (post-commit fix(ai): bypass verify_jwt en develop-idea).
 
 ## Contexto rápido
 
@@ -48,37 +48,36 @@ App web + mobile para capturar y desarrollar ideas con IA. MVP en camino a produ
 - [x] `.env.example` commiteado, `.env.local` con credenciales reales (ignorado)
 - [x] Smoke test: `supabase.auth.getSession()` responde OK en browser
 
-### Fase 1 — Auth + persistencia cloud: ✅ COMPLETADA
+### Fase 1 — Auth + persistencia cloud: 🟡 99% — pendiente activar Anthropic
 
-Objetivo: usuarios se registran y sus ideas viven en Postgres. Proxy de Anthropic funcionando.
+✅ Hecho:
 
-Completado:
+- Auth con magic link + OAuth Google
+- Postgres (profiles, ideas, api_usage) con RLS, triggers, soft deletes
+- Migración de `profiles.tier` para estrategia free_trial/byok/paid
+- Edge Function `develop-idea` desplegada con:
+  - Provider abstraction (AIProvider interface, AnthropicProvider)
+  - Rate limit lifetime 20 req para tier `free_trial`
+  - Validación zod en request y response del modelo
+  - Fix de CORS (x-client-info, apikey)
+  - verify_jwt = false para compatibilidad con ES256
+- Hook `useDevelopIdea` conectado, error handling inline en IdeaDetailPage
 
-- [x] `supabase link` al proyecto remoto (`buxpbftbncgvicayvhrl`)
-- [x] Primera migración SQL: `profiles`, `ideas`, `api_usage` + triggers `updated_at` + trigger crear profile al signup
-- [x] RLS policies para las 3 tablas (en la misma migración)
-- [x] `database.types.ts` regenerado con tipos reales de `profiles`, `ideas`, `api_usage`
-- [x] Schemas zod de dominio en `packages/core/src/schemas/` (idea, auth)
-- [x] React Query provider en `apps/web` (`app/providers.tsx`, `staleTime: 30_000`)
-- [x] Hooks: `useIdeas`, `useIdea`, `useCreateIdea`, `useUpdateIdea`, `useDeleteIdea` (soft delete)
-- [x] `useDevelopIdea` — stub (lanza error hasta Prompt C)
-- [x] Auth con magic link: `LoginPage`, `AuthCallbackPage`, `AuthForm`
-- [x] `useAuth` hook con `AuthProvider` (Context, `onAuthStateChange`, expone `{ user, session, loading }`)
-- [x] `useSignOut` hook
-- [x] `ProtectedRoute` con spinner + redirect a `/login`
-- [x] Rutas: `/login`, `/signup`, `/auth/callback`, `/`, `/ideas/new`, `/ideas/:id`
-- [x] `IdeasListPage` con Sidebar (stage filter + search) + lista de IdeaCards
-- [x] `NewIdeaPage` con formulario validado con zod
-- [x] `IdeaDetailPage` con edición inline, eliminación (soft delete), botón IA (stub)
-- [x] Componentes: `IdeaCard`, `StagePill`, `Sidebar`, `DevBlock`
-- [x] CSS Modules — dark theme `#0f0e0c`, fuentes Lora + JetBrains Mono
-- [x] `pnpm --filter @ideavault/web build` ✅ sin errores TS
+⏸️ Pendiente (administrativo, no código):
 
-- [x] **OAuth Google** — `useSignInWithGoogle`, `GoogleButton` (SVG inline), separador en `AuthForm`
+- Cargar crédito en Anthropic (mínimo USD 5 en console.anthropic.com/settings/billing)
+- Crear API key y setearla como secret en Supabase:
+  ```bash
+  echo "ANTHROPIC_API_KEY=sk-ant-api03-..." > .env.tmp
+  pnpm supabase secrets set --env-file .env.tmp
+  rm .env.tmp
+  ```
+- Testear end-to-end: logueo → crear idea → "Desarrollar con IA" → se llenan los 6 bloques
+- Verificar en Supabase Dashboard que `api_usage` registra la request y `ideas.development` se llena
 
-- [x] Edge Function `develop-idea` con rate limit contra `api_usage`
-- [x] Secret `ANTHROPIC_API_KEY` en Supabase
-- [x] Reemplazar stub `useDevelopIdea` por `supabase.functions.invoke`
+**Decisión explícita del usuario**: este paso se pospone hasta después de Fase 2 (mobile-first).
+El costo estimado de testing es despreciable (~USD 0.01 por develop-idea con Haiku), pero queremos
+probar la IA sobre la UI final, no la actual.
 
 ### Fase 1.5 — Multi-provider + BYOK: PENDIENTE
 
@@ -88,13 +87,24 @@ Completado:
 - Router: si tier=byok usa key del user, si no usa la del sistema.
 - Selector de provider/modelo en la UI del botón "Desarrollar".
 
-### Fases 2-6 — PENDIENTES
+### Fase 2 — Mobile-first responsive: PRÓXIMA
 
-- Fase 2: Tags custom + compartir ideas (link público + por usuario)
-- Fase 3: App mobile con Expo
-- Fase 4: Offline + sync
-- Fase 5: Export PDF + Notion
-- Fase 6: Polish, dominio, landing, analytics, deploy final
+Alcance definido:
+
+- Sidebar lateral → hamburger menu en <768px
+- Grid de cards → columna única en mobile
+- Forms y detalle con tipografía/spacing mobile-adaptados
+- Empty state: 1-2 ideas de ejemplo pre-desarrolladas inyectadas por
+  `handle_new_user()` trigger de Postgres (sin gastar requests de Anthropic)
+- Viewport meta tag y PWA basics (manifest, theme color)
+- NO hacemos app nativa (React Native/Expo) todavía — responsive PWA alcanza
+
+### Fases 3-6 — PENDIENTES
+
+- Fase 3: Tags custom + compartir ideas (link público + por usuario)
+- Fase 4: App mobile con Expo
+- Fase 5: Offline + sync
+- Fase 6: Export PDF + Notion + polish, dominio, landing, analytics, deploy final
 
 ## Schema actual
 
@@ -168,7 +178,12 @@ ideavault/
 - `768142f` — feat(core): schemas zod de idea y auth
 - `5078287` — feat(web): auth con magic link + protected routes
 - `4ebec9c` — refactor(web): refactor de ideas a features/ con react query
-- `(próximo)` — feat(auth): oauth con google
+- `4ea3219` — feat(auth): oauth con google
+- `1e322be` — feat(db): columna tier en profiles para segmentación de uso
+- `65f60e5` — feat(ai): edge function develop-idea con provider abstraction y rate limit lifetime
+- `6a7a064` — fix(ai): permitir headers x-client-info y apikey en cors de develop-idea
+- `8615bc4` — fix(ai): soporte de JWT ES256 en develop-idea
+- `9096303` — fix(ai): bypass verify_jwt en develop-idea (ES256 lo validamos en el handler)
 
 ## Decisiones técnicas clave tomadas (para no revisitar)
 
@@ -186,6 +201,16 @@ ideavault/
 - **`@ideavault/core` consumido vía source (`.ts`)**, no vía dist. Ahorra build intermedio.
 - **Rate limit LIFETIME (20 para free_trial)** en vez de mensual, dado que la estrategia es free trial → BYOK / paid (Fase 1.5). Se cuenta con `count(*) from api_usage where user_id = X` sin filtro temporal.
 - **Provider abstraction en `develop-idea`**: interfaz `AIProvider` con `AnthropicProvider` como única implementación. Agregar providers = nueva clase + `case` en `getProvider` switch.
+- **Estrategia de monetización (definida, implementación en Fase 1.5)**:
+  free_trial (20 lifetime) → byok (propia key, uso ilimitado) → paid (suscripción).
+  BYOK es la defensa contra multi-accounting del free trial — los abusadores
+  pasan a BYOK, no hacen daño económico.
+- **verify_jwt = false en develop-idea**: necesario porque Supabase aún no
+  soporta ES256 en el verify automático de la plataforma. Nuestro handler
+  valida el JWT manualmente con `admin.auth.getUser(token)`. Seguro.
+- **Supabase secrets método preferido**: `--env-file` con archivo temporal
+  que se borra después. El método inline (`set KEY=value`) tiene problemas
+  de parsing con caracteres especiales.
 
 ## Riesgos activos
 
@@ -202,7 +227,22 @@ ideavault/
 
 ## Próximo paso inmediato
 
-**Fase 2 — Tags custom + compartir ideas.**
+**Fase 2 (mobile-first responsive) ANTES de activar Anthropic.**
+
+Decisión: el target primario del producto es mobile (capturar ideas al vuelo).
+Hacer la web responsive mobile-first ahora evita rediseñar después. Cuando la
+UI esté lista, recién ahí cargamos USD 5 en Anthropic y testeamos IA sobre la
+versión final.
+
+Alcance Fase 2:
+
+- Sidebar lateral → hamburger menu en <768px
+- Grid de cards → columna única en mobile
+- Forms y detalle con tipografía/spacing mobile-adaptados
+- Empty state: 1-2 ideas de ejemplo pre-desarrolladas inyectadas por
+  `handle_new_user()` trigger de Postgres (sin gastar requests de Anthropic)
+- Viewport meta tag y PWA basics (manifest, theme color)
+- NO hacemos app nativa (React Native/Expo) todavía — responsive PWA alcanza
 
 ## Cómo retomar con un Claude nuevo
 
